@@ -1,5 +1,5 @@
 import unittest
-from crawl import Crawler
+from crawler import Crawler
 import os
 
 class SampleCrawler(Crawler):
@@ -33,8 +33,6 @@ class CrawlTest(unittest.TestCase):
             self.assertTrue(written_url in read_urls)
         self.assertTrue(len(written_urls) == len(written_urls))
 
-    def test_get_page_links(self):
-        requests.get("url1")
 
     def tearDown(self):
         for junk_file in self.junk_files:
