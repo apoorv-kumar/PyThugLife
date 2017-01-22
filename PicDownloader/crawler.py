@@ -52,13 +52,13 @@ class Crawler:
     def get_page_links(cls, page_url):
         page_text = cls.get_page_text(page_url)
         soup = bs4.BeautifulSoup(page_text, "html.parser")
-        return map(lambda link: link.get("href"), soup.find_all('a') )
+        return list(map(lambda link: link.get("href"), soup.find_all('a')))
 
     @classmethod
     def get_page_pics(cls, page_url):
         page_text = cls.get_page_text(page_url)
         soup = bs4.BeautifulSoup(page_text, "html.parser")
-        return map(lambda link: link.get("src"), soup.find_all('img') )
+        return list(map(lambda link: link.get("src"), soup.find_all('img')))
 
     # returns dict of images and link queue
     # image and link lambdas return true/false
@@ -72,8 +72,8 @@ class Crawler:
         def curried_image_lambda(link):
             image_lambda(page_url, link)
 
-        valid_links = filter(link_lambda, page_links)
-        valid_pics = filter(curried_image_lambda, page_pics)
+        valid_links = list(filter(link_lambda, page_links))
+        valid_pics = list(filter(curried_image_lambda, page_pics))
         return valid_pics, valid_links
 
     @classmethod

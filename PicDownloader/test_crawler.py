@@ -22,7 +22,17 @@ class SampleCrawler(Crawler):
     def get_link_lambda():
         return lambda link: "__isvalidlink__" in link
 
-
+    @staticmethod
+    def get_page_text(page_url):
+        return '''
+        <html>
+        <a   href="http://__isvalidlink__123">
+            <img src="http://someinvalid_link.jpg">
+        </a>
+        <a href="http://_someinvalid_link"> mytext </a>
+        <img src="http://__isvalidpic__333.png">
+        </html>
+        '''
 class CrawlTest(unittest.TestCase):
     junk_files = []
 
@@ -54,6 +64,20 @@ class CrawlTest(unittest.TestCase):
             img_data = img_file.read()
         print("this", img_data)
         self.assertEqual(img_data, "response_content")
+
+    def test_get_page_links(self):
+        url_list = SampleCrawler.get_page_links("http://someurl")
+        expected_urls = ["http://__isvalidlink__123", "http://_someinvalid_link"]
+        for url in expected_urls:
+            self.assertTrue(url in url_list)
+        self.assertEqual(len(url_list), len(expected_urls))
+
+    def test_get_page_pics(self):
+        url_list = SampleCrawler.get_page_pics("http://someurl")
+        expected_urls = ["http://someinvalid_link.jpg", "http://__isvalidpic__333.png"]
+        for url in expected_urls:
+            self.assertTrue(url in url_list)
+        self.assertEqual(len(url_list), len(expected_urls))
 
 
     @classmethod
