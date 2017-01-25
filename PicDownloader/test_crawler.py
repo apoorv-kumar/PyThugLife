@@ -16,7 +16,7 @@ class SampleCrawler(Crawler):
 
     @staticmethod
     def get_image_lambda():
-        return lambda link: "__isvalidpic__" in link
+        return lambda page_url, img_url: "__isvalidpic__" in img_url
 
     @staticmethod
     def get_link_lambda():
@@ -68,16 +68,25 @@ class CrawlTest(unittest.TestCase):
     def test_get_page_links(self):
         url_list = SampleCrawler.get_page_links("http://someurl")
         expected_urls = ["http://__isvalidlink__123", "http://_someinvalid_link"]
-        for url in expected_urls:
-            self.assertTrue(url in url_list)
-        self.assertEqual(len(url_list), len(expected_urls))
+        self.assertListEqual(url_list, expected_urls)
 
     def test_get_page_pics(self):
         url_list = SampleCrawler.get_page_pics("http://someurl")
         expected_urls = ["http://someinvalid_link.jpg", "http://__isvalidpic__333.png"]
-        for url in expected_urls:
-            self.assertTrue(url in url_list)
-        self.assertEqual(len(url_list), len(expected_urls))
+        self.assertListEqual(url_list, expected_urls)
+
+    def test_get_artifacts(self):
+        valid_pics, valid_links = SampleCrawler.get_artifacts("http://someurl",
+                                                              SampleCrawler.get_image_lambda(),
+                                                              SampleCrawler.get_link_lambda())
+        self.assertListEqual(valid_links, ["http://__isvalidlink__123"])
+        self.assertListEqual(valid_pics, ["http://__isvalidpic__333.png"])
+
+    def test_crawl(self):
+        image_list = SampleCrawler.crawl("http://someurl")
+        self.assertEqual(len(image_list), 1001)
+        unique_pics = list(set(image_list))
+        self.assertListEqual(unique_pics, ["http://__isvalidpic__333.png"])
 
 
     @classmethod

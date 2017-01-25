@@ -70,7 +70,7 @@ class Crawler:
         page_pics = cls.get_page_pics(page_url)
 
         def curried_image_lambda(link):
-            image_lambda(page_url, link)
+            return image_lambda(page_url, link)
 
         valid_links = list(filter(link_lambda, page_links))
         valid_pics = list(filter(curried_image_lambda, page_pics))
@@ -102,3 +102,4 @@ class Crawler:
 
         cls.log_urls(visited_urls)
         print("crawl session finished")
+        return image_list
