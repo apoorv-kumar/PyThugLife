@@ -72,8 +72,8 @@ class Crawler:
     def crawl(self, page_url, image_limit=1000, link_limit=100):
         link_breaker_set = False
         image_breaker_set = False
-        image_list = deque()
-        link_list = deque([page_url])
+        image_list = set()
+        link_list = deque([page_url])  # for a BFS
 
         visited_urls = set()
 
@@ -84,7 +84,7 @@ class Crawler:
                                                      self.get_image_lambda(),
                                                      self.get_link_lambda())
 
-            image_list.extend(new_pics)
+            image_list = image_list.union(set(new_pics))
             image_breaker_set = len(image_list) > image_limit
             if not link_breaker_set:
                 unvisited_links = set(new_links).difference(visited_urls)

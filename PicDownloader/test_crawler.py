@@ -73,14 +73,10 @@ class CrawlTest(unittest.TestCase):
     def test_crawl(self):
         # terminate on images
         image_list = self.crawler.crawl("http://someurl", image_limit=100, link_limit=100)
-        self.assertEqual(len(set(image_list)), 2)
-        unique_pics = set(image_list)
-        self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
+        self.assertSetEqual(image_list, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
         # terminate on links
         image_list = self.crawler.crawl("http://someurl", image_limit=1000, link_limit=100)
-        self.assertEqual(len(set(image_list)), 2)
-        unique_pics = set(image_list)
-        self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
+        self.assertSetEqual(image_list, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
 
     @classmethod
     def tearDownClass(cls):
