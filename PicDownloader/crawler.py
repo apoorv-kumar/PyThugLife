@@ -6,43 +6,34 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from time import time
 
+# TODO: do we need inheritance when we can simply
+#       pass along the lambda via constructor ?
 class Crawler:
     __metaclass__ = ABCMeta
 
-    @staticmethod
+    def __init__(self, _base_dir):
+        self.base_dir = _base_dir
+
+    # points to the base dir
+    # where logs are created.
+    base_dir = str()
+
     @abstractmethod
-    def get_image_lambda():
+    def get_image_lambda(self):
         pass
 
-    @staticmethod
     @abstractmethod
-    def get_link_lambda():
+    def get_link_lambda(self):
         pass
 
-    @staticmethod
-    @abstractmethod
-    def get_base_dir():
-        pass
-
-    @classmethod
-    def log_urls(cls, visited_urls):
-        log_loc = cls.get_base_dir() + "url_log_" + str(int(time())) + ".log"
+    def log_urls(self, visited_urls):
+        log_loc = self.base_dir + "url_log_" + str(int(time())) + ".log"
         with open(log_loc, 'w') as log_file:
             log_file.write("\n".join(visited_urls))
             # guarantee flush to disk ( TODO: while testing only. remove it )
             log_file.flush()
             os.fsync(log_file.fileno())
         return log_loc
-
-    # TODO: probably should be moved out of crawler into downloader
-    @classmethod
-    def download_pic(cls, pic_url):
-        response = requests.get(pic_url, stream=True)
-        name = str(hash(pic_url + str(time()))&65535) + ".jpg"
-        image_loc = cls.get_base_dir() + '/' + name
-        with open(image_loc, 'wb') as out_file:
-            shutil.copyfileobj(response.raw, out_file)
-        return image_loc
 
     @staticmethod
     def get_page_text(page_url):
@@ -76,8 +67,9 @@ class Crawler:
         valid_pics = list(filter(curried_image_lambda, page_pics))
         return valid_pics, valid_links
 
-    @classmethod
-    def crawl(cls, page_url, image_limit=1000, link_limit=100):
+    # returns list of images that the crawler crawled.
+    # side effect - writes a log file listing urls visited.
+    def crawl(self, page_url, image_limit=1000, link_limit=100):
         link_breaker_set = False
         image_breaker_set = False
         image_list = deque()
@@ -88,9 +80,9 @@ class Crawler:
         # break if no links or too many images
         while not image_breaker_set and len(link_list) > 0:
             current_url = link_list.popleft()
-            new_pics, new_links = cls.get_artifacts(current_url,
-                                                    cls.get_image_lambda(),
-                                                    cls.get_link_lambda())
+            new_pics, new_links = self.get_artifacts(current_url,
+                                                     self.get_image_lambda(),
+                                                     self.get_link_lambda())
 
             image_list.extend(new_pics)
             image_breaker_set = len(image_list) > image_limit
@@ -100,6 +92,6 @@ class Crawler:
             visited_urls.append(current_url)
             link_breaker_set = len(visited_urls) > link_limit
 
-        cls.log_urls(visited_urls)
+        self.log_urls(visited_urls)
         print("crawl session finished")
         return image_list

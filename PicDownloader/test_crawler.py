@@ -8,13 +8,6 @@ from io import BytesIO
 class SampleCrawler(Crawler):
 
     @staticmethod
-    def get_base_dir():
-        if sys.platform == 'linux':
-            return '/tmp/'
-        else:
-            return 'C:/Users/apoor/AppData/Local/Temp/'
-
-    @staticmethod
     def get_image_lambda():
         return lambda page_url, img_url: "__isvalidpic__" in img_url
 
@@ -37,16 +30,17 @@ class SampleCrawler(Crawler):
 class CrawlTest(unittest.TestCase):
     junk_files = []
 
-    def mocked_requests_get(*args, **kwargs):
-        class MockedResponse:
-            def __init__(self):
-                self.raw = BytesIO(b"response_content")
-
-        return MockedResponse()
+    @classmethod
+    def setUpClass(cls):
+        if sys.platform == 'linux':
+            base_dir = '/tmp/'
+        else:
+            base_dir = 'C:/Users/apoor/AppData/Local/Temp/'
+        cls.crawler = SampleCrawler(base_dir)
 
     def test_url_logger(self):
         written_urls = ['http://some_url.com', 'https://some_url.com']
-        log_loc = SampleCrawler.log_urls(written_urls)
+        log_loc = self.crawler.log_urls(written_urls)
         self.junk_files.append(log_loc)
 
         with open(log_loc, 'r') as log_file:
@@ -56,15 +50,6 @@ class CrawlTest(unittest.TestCase):
         for written_url in written_urls:
             self.assertTrue(written_url in read_urls)
         self.assertTrue(len(written_urls) == len(written_urls))
-
-    @patch('requests.get', side_effect=mocked_requests_get)
-    def test_download_pic(self, mock_get):
-        img_loc = SampleCrawler.download_pic("http://test_url")
-        self.junk_files.append(img_loc)
-        with open(img_loc, 'r') as img_file:
-            img_data = img_file.read()
-        print("this", img_data)
-        self.assertEqual(img_data, "response_content")
 
     def test_get_page_links(self):
         url_list = SampleCrawler.get_page_links("http://someurl")
@@ -88,12 +73,12 @@ class CrawlTest(unittest.TestCase):
 
     def test_crawl(self):
         # throttled on images
-        image_list = SampleCrawler.crawl("http://someurl", image_limit=100, link_limit=100)
+        image_list = self.crawler.crawl("http://someurl", image_limit=100, link_limit=100)
         self.assertEqual(len(image_list), 100+2)
         unique_pics = set(image_list)
         self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
         # throttled on links
-        image_list = SampleCrawler.crawl("http://someurl", image_limit=1000, link_limit=100)
+        image_list = self.crawler.crawl("http://someurl", image_limit=1000, link_limit=100)
         self.assertEqual(len(image_list), (100+2)*2 )
         unique_pics = set(image_list)
         self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
