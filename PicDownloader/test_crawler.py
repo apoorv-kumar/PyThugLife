@@ -2,8 +2,7 @@ import unittest
 from crawler import Crawler
 import os
 import sys
-from unittest.mock import patch
-from io import BytesIO
+
 
 class SampleCrawler(Crawler):
 
