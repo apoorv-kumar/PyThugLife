@@ -5,6 +5,8 @@ import shutil
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from time import time
+import re
+from urllib.parse import urljoin
 
 # TODO: do we need inheritance when we can simply
 #       pass along the lambda via constructor ?
@@ -16,7 +18,7 @@ class Crawler:
 
     # points to the base dir
     # where logs are created.
-    base_dir = str()
+    base_dir = None
 
     @abstractmethod
     def get_image_lambda(self):
@@ -25,6 +27,15 @@ class Crawler:
     @abstractmethod
     def get_link_lambda(self):
         pass
+
+    # always returns absolute path
+    @staticmethod
+    def get_abs_url(link_url, curr_page_url):
+        abs_pattern = re.compile(".*://.*")  # quite generic url
+        if abs_pattern.match(link_url) is None:
+            return urljoin(curr_page_url, link_url)  # make absolute
+        else:
+            return link_url
 
     def log_urls(self, visited_urls):
         log_loc = self.base_dir + "url_log_" + str(int(time())) + ".log"
@@ -43,13 +54,19 @@ class Crawler:
     def get_page_links(cls, page_url):
         page_text = cls.get_page_text(page_url)
         soup = bs4.BeautifulSoup(page_text, "html.parser")
-        return list(map(lambda link: link.get("href"), soup.find_all('a')))
+        page_links = map(lambda link: link.get("href"), soup.find_all('a'))
+        page_links_absolute = \
+            map(lambda link: cls.get_abs_url(link, page_url), page_links)
+        return list(page_links_absolute)
 
     @classmethod
     def get_page_pics(cls, page_url):
         page_text = cls.get_page_text(page_url)
         soup = bs4.BeautifulSoup(page_text, "html.parser")
-        return list(map(lambda link: link.get("src"), soup.find_all('img')))
+        page_pics = map(lambda link: link.get("src"), soup.find_all('img'))
+        page_pics_absolute = \
+            map(lambda link: cls.get_abs_url(link, page_url), page_pics)
+        return list(page_pics_absolute)
 
     # returns dict of images and link queue
     # image and link lambdas return true/false

@@ -18,14 +18,16 @@ class SampleCrawler(Crawler):
     def get_page_text(page_url):
         return '''
         <html>
-        <a   href="http://__isvalidlink__123">
+        <a   href="__isvalidlink__123">
             <img src="http://someinvalid_link.jpg">
         </a>
         <a href="http://_someinvalid_link"> mytext </a>
-        <img src="http://__isvalidpic__111.png">
-        <img src="http://__isvalidpic__333.png">
+        <img src="http://website/__isvalidpic__111.png">
+        <img src="__isvalidpic__333.png">
         </html>
         '''
+
+
 class CrawlTest(unittest.TestCase):
     junk_files = []
 
@@ -50,33 +52,42 @@ class CrawlTest(unittest.TestCase):
             self.assertTrue(written_url in read_urls)
         self.assertTrue(len(written_urls) == len(written_urls))
 
+
+    def test_get_abs_url(self):
+        self.assertEqual(
+            SampleCrawler.get_abs_url("/some_relative_path.blah", "http://myweb.www.x/44/abc.jpg"),
+            "http://myweb.www.x/some_relative_path.blah"
+        )
+
     def test_get_page_links(self):
-        url_list = SampleCrawler.get_page_links("http://someurl")
-        expected_urls = ["http://__isvalidlink__123", "http://_someinvalid_link"]
-        self.assertListEqual(url_list, expected_urls)
+        url_list = SampleCrawler.get_page_links("http://website/someurl")
+        expected_urls = ["http://website/__isvalidlink__123", "http://_someinvalid_link"]
+        self.assertSetEqual(set(url_list), set(expected_urls))
 
     def test_get_page_pics(self):
-        url_list = SampleCrawler.get_page_pics("http://someurl")
+        url_list = SampleCrawler.get_page_pics("http://website/someurl")
         expected_urls = ["http://someinvalid_link.jpg",
-                         "http://__isvalidpic__111.png",
-                         "http://__isvalidpic__333.png"]
+                         "http://website/__isvalidpic__111.png",
+                         "http://website/__isvalidpic__333.png"]
         self.assertSetEqual(set(url_list), set(expected_urls))
 
     def test_get_artifacts(self):
-        valid_pics, valid_links = SampleCrawler.get_artifacts("http://someurl",
+        valid_pics, valid_links = SampleCrawler.get_artifacts("http://website/someurl",
                                                               SampleCrawler.get_image_lambda(),
                                                               SampleCrawler.get_link_lambda())
-        self.assertSetEqual(set(valid_links), set(["http://__isvalidlink__123"]))
-        self.assertSetEqual(set(valid_pics), set(["http://__isvalidpic__111.png",
-                                                  "http://__isvalidpic__333.png"]))
+        self.assertSetEqual(set(valid_links), set(["http://website/__isvalidlink__123"]))
+        self.assertSetEqual(set(valid_pics), set(["http://website/__isvalidpic__111.png",
+                                                  "http://website/__isvalidpic__333.png"]))
 
     def test_crawl(self):
         # terminate on images
-        image_list = self.crawler.crawl("http://someurl", image_limit=100, link_limit=100)
-        self.assertSetEqual(image_list, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
+        image_list = self.crawler.crawl("http://website/someurl", image_limit=100, link_limit=100)
+        self.assertSetEqual(image_list, set(["http://website/__isvalidpic__333.png",
+                                             "http://website/__isvalidpic__111.png"]))
         # terminate on links
-        image_list = self.crawler.crawl("http://someurl", image_limit=1000, link_limit=100)
-        self.assertSetEqual(image_list, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
+        image_list = self.crawler.crawl("http://website/someurl", image_limit=1000, link_limit=100)
+        self.assertSetEqual(image_list, set(["http://website/__isvalidpic__333.png",
+                                             "http://website/__isvalidpic__111.png"]))
 
     @classmethod
     def tearDownClass(cls):
