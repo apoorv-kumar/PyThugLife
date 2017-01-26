@@ -96,9 +96,9 @@ class Crawler:
             image_breaker_set = len(image_list) > image_limit
             if not link_breaker_set:
                 link_list.extend(new_links)
-                link_breaker_set = len(link_list) > link_limit
             # log for record
             visited_urls.append(current_url)
+            link_breaker_set = len(visited_urls) > link_limit
 
         cls.log_urls(visited_urls)
         print("crawl session finished")

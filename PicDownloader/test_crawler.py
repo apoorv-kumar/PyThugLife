@@ -30,6 +30,7 @@ class SampleCrawler(Crawler):
             <img src="http://someinvalid_link.jpg">
         </a>
         <a href="http://_someinvalid_link"> mytext </a>
+        <img src="http://__isvalidpic__111.png">
         <img src="http://__isvalidpic__333.png">
         </html>
         '''
@@ -72,22 +73,30 @@ class CrawlTest(unittest.TestCase):
 
     def test_get_page_pics(self):
         url_list = SampleCrawler.get_page_pics("http://someurl")
-        expected_urls = ["http://someinvalid_link.jpg", "http://__isvalidpic__333.png"]
-        self.assertListEqual(url_list, expected_urls)
+        expected_urls = ["http://someinvalid_link.jpg",
+                         "http://__isvalidpic__111.png",
+                         "http://__isvalidpic__333.png"]
+        self.assertSetEqual(set(url_list), set(expected_urls))
 
     def test_get_artifacts(self):
         valid_pics, valid_links = SampleCrawler.get_artifacts("http://someurl",
                                                               SampleCrawler.get_image_lambda(),
                                                               SampleCrawler.get_link_lambda())
-        self.assertListEqual(valid_links, ["http://__isvalidlink__123"])
-        self.assertListEqual(valid_pics, ["http://__isvalidpic__333.png"])
+        self.assertSetEqual(set(valid_links), set(["http://__isvalidlink__123"]))
+        self.assertSetEqual(set(valid_pics), set(["http://__isvalidpic__111.png",
+                                                  "http://__isvalidpic__333.png"]))
 
     def test_crawl(self):
-        image_list = SampleCrawler.crawl("http://someurl")
-        self.assertEqual(len(image_list), 1001)
-        unique_pics = list(set(image_list))
-        self.assertListEqual(unique_pics, ["http://__isvalidpic__333.png"])
-
+        # throttled on images
+        image_list = SampleCrawler.crawl("http://someurl", image_limit=100, link_limit=100)
+        self.assertEqual(len(image_list), 100+2)
+        unique_pics = set(image_list)
+        self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
+        # throttled on links
+        image_list = SampleCrawler.crawl("http://someurl", image_limit=1000, link_limit=100)
+        self.assertEqual(len(image_list), (100+2)*2 )
+        unique_pics = set(image_list)
+        self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
 
     @classmethod
     def tearDownClass(cls):
