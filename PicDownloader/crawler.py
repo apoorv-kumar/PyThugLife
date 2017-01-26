@@ -75,7 +75,7 @@ class Crawler:
         image_list = deque()
         link_list = deque([page_url])
 
-        visited_urls = deque()
+        visited_urls = set()
 
         # break if no links or too many images
         while not image_breaker_set and len(link_list) > 0:
@@ -87,9 +87,10 @@ class Crawler:
             image_list.extend(new_pics)
             image_breaker_set = len(image_list) > image_limit
             if not link_breaker_set:
-                link_list.extend(new_links)
+                unvisited_links = set(new_links).difference(visited_urls)
+                link_list.extend(list(unvisited_links))
             # log for record
-            visited_urls.append(current_url)
+            visited_urls.add(current_url)
             link_breaker_set = len(visited_urls) > link_limit
 
         self.log_urls(visited_urls)

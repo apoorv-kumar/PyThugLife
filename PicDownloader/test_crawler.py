@@ -72,14 +72,14 @@ class CrawlTest(unittest.TestCase):
                                                   "http://__isvalidpic__333.png"]))
 
     def test_crawl(self):
-        # throttled on images
+        # terminate on images
         image_list = self.crawler.crawl("http://someurl", image_limit=100, link_limit=100)
-        self.assertEqual(len(image_list), 100+2)
+        self.assertEqual(len(set(image_list)), 2)
         unique_pics = set(image_list)
         self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
-        # throttled on links
+        # terminate on links
         image_list = self.crawler.crawl("http://someurl", image_limit=1000, link_limit=100)
-        self.assertEqual(len(image_list), (100+2)*2 )
+        self.assertEqual(len(set(image_list)), 2)
         unique_pics = set(image_list)
         self.assertSetEqual(unique_pics, set(["http://__isvalidpic__333.png", "http://__isvalidpic__111.png"]))
 
