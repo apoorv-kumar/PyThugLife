@@ -1,13 +1,13 @@
 import requests
 import bs4
 import os
-import shutil
 from abc import ABCMeta, abstractmethod
 from collections import deque
-from time import time
+from time import time, clock
 import re
 from urllib.parse import urljoin
 
+# TODO: handle kill signals. Or log results periodically.
 # TODO: do we need inheritance when we can simply
 #       pass along the lambda via constructor ?
 class Crawler:
@@ -93,8 +93,9 @@ class Crawler:
         return valid_pics, valid_links
 
     # returns list of images that the crawler crawled.
+    # periodically checks if app has exceeded max_time seconds
     # side effect - writes a log file listing urls visited.
-    def crawl(self, page_url, image_limit=1000, link_limit=5000):
+    def crawl(self, page_url, image_limit=1000, link_limit=5000, max_time=9000):
         link_breaker_set = False
         image_breaker_set = False
         image_list = set()
@@ -103,15 +104,13 @@ class Crawler:
         visited_links = deque()
         queued_links = set()  # links that've ever been queued
 
-        # break if no links or too many images
-        while not image_breaker_set and len(link_list) > 0:
+        # break if no links or too many images or
+        while not image_breaker_set and len(link_list) > 0 and clock() < max_time:
             current_url = link_list.popleft()
             Crawler.log_msg("visiting: " + current_url)
             page_pics, page_links = self.get_artifacts(current_url,
                                                      self.get_image_lambda(),
                                                      self.get_link_lambda())
-
-            Crawler.log_msg("pics on page: " + str(page_pics))
 
             # add pics
             image_list = image_list.union(set(page_pics))
@@ -126,7 +125,9 @@ class Crawler:
             # log for record
             visited_links.append(current_url)
             link_breaker_set = len(queued_links) > link_limit
-            Crawler.log_msg("current queue:: " + str(link_list))
+            Crawler.log_msg("images till now:: " + str(len(image_list)) + "/" + str(image_limit))
+            Crawler.log_msg("links till now:: " + str(len(queued_links)) + "/" + str(link_limit))
+
         log_loc = self.log_urls(visited_links)
         print("crawl session finished. Urls logged at: ", log_loc)
         return image_list
