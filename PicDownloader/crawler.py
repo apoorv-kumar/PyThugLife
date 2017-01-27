@@ -42,7 +42,7 @@ class Crawler:
         print(msg)
 
     def log_urls(self, visited_urls):
-        log_loc = self.base_dir + "url_log_" + str(int(time())) + ".log"
+        log_loc = self.base_dir + "url_log_" + str(int(time())) + str(clock()) + ".log"
         with open(log_loc, 'w') as log_file:
             log_file.write("\n".join(visited_urls))
             # guarantee flush to disk ( TODO: while testing only. remove it )
@@ -103,9 +103,9 @@ class Crawler:
 
         visited_links = deque()
         queued_links = set()  # links that've ever been queued
-
-        # break if no links or too many images or
-        while not image_breaker_set and len(link_list) > 0 and clock() < max_time:
+        start_time = time()
+        # break if no links or too many images or time exceeded
+        while not image_breaker_set and len(link_list) > 0 and time() - start_time < max_time:
             current_url = link_list.popleft()
             Crawler.log_msg("visiting: " + current_url)
             page_pics, page_links = self.get_artifacts(current_url,
