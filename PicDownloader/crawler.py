@@ -37,6 +37,10 @@ class Crawler:
         else:
             return link_url
 
+    @staticmethod
+    def log_msg(msg):
+        print(msg)
+
     def log_urls(self, visited_urls):
         log_loc = self.base_dir + "url_log_" + str(int(time())) + ".log"
         with open(log_loc, 'w') as log_file:
@@ -50,20 +54,24 @@ class Crawler:
     def get_page_text(page_url):
         return requests.get(page_url).text
 
+    # gets all links on the page and converts them
+    # to absolute paths
     @classmethod
     def get_page_links(cls, page_url):
         page_text = cls.get_page_text(page_url)
         soup = bs4.BeautifulSoup(page_text, "html.parser")
-        page_links = map(lambda link: link.get("href"), soup.find_all('a'))
+        page_links = map(lambda link: str(link.get("href")), soup.find_all('a'))
         page_links_absolute = \
             map(lambda link: cls.get_abs_url(link, page_url), page_links)
         return list(page_links_absolute)
 
+    # gets all links on the page and converts them
+    # to absolute paths
     @classmethod
     def get_page_pics(cls, page_url):
         page_text = cls.get_page_text(page_url)
         soup = bs4.BeautifulSoup(page_text, "html.parser")
-        page_pics = map(lambda link: link.get("src"), soup.find_all('img'))
+        page_pics = map(lambda link: str(link.get("src")), soup.find_all('img'))
         page_pics_absolute = \
             map(lambda link: cls.get_abs_url(link, page_url), page_pics)
         return list(page_pics_absolute)
@@ -86,30 +94,39 @@ class Crawler:
 
     # returns list of images that the crawler crawled.
     # side effect - writes a log file listing urls visited.
-    def crawl(self, page_url, image_limit=1000, link_limit=100):
+    def crawl(self, page_url, image_limit=1000, link_limit=5000):
         link_breaker_set = False
         image_breaker_set = False
         image_list = set()
         link_list = deque([page_url])  # for a BFS
 
-        visited_urls = set()
+        visited_links = deque()
+        queued_links = set()  # links that've ever been queued
 
         # break if no links or too many images
         while not image_breaker_set and len(link_list) > 0:
             current_url = link_list.popleft()
-            new_pics, new_links = self.get_artifacts(current_url,
+            Crawler.log_msg("visiting: " + current_url)
+            page_pics, page_links = self.get_artifacts(current_url,
                                                      self.get_image_lambda(),
                                                      self.get_link_lambda())
 
-            image_list = image_list.union(set(new_pics))
-            image_breaker_set = len(image_list) > image_limit
-            if not link_breaker_set:
-                unvisited_links = set(new_links).difference(visited_urls)
-                link_list.extend(list(unvisited_links))
-            # log for record
-            visited_urls.add(current_url)
-            link_breaker_set = len(visited_urls) > link_limit
+            Crawler.log_msg("pics on page: " + str(page_pics))
 
-        self.log_urls(visited_urls)
-        print("crawl session finished")
+            # add pics
+            image_list = image_list.union(set(page_pics))
+            image_breaker_set = len(image_list) > image_limit
+
+            if not link_breaker_set:
+                # get new links
+                new_links = set(page_links).difference(queued_links)
+                queued_links = queued_links.union(new_links)
+                link_list.extend(list(new_links))
+
+            # log for record
+            visited_links.append(current_url)
+            link_breaker_set = len(queued_links) > link_limit
+            Crawler.log_msg("current queue:: " + str(link_list))
+        log_loc = self.log_urls(visited_links)
+        print("crawl session finished. Urls logged at: ", log_loc)
         return image_list
