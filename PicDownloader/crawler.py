@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 class Crawler:
     __metaclass__ = ABCMeta
 
+    # TODO: base_dir + <new dir for each session>
     def __init__(self, _base_dir):
         self.base_dir = _base_dir
 
@@ -41,8 +42,8 @@ class Crawler:
     def log_msg(msg):
         print(msg)
 
-    def log_urls(self, visited_urls):
-        log_loc = self.base_dir + "url_log_" + str(int(time())) + str(clock()) + ".log"
+    def log_urls(self, visited_urls, url_type=""):
+        log_loc = self.base_dir + url_type + "log_" + str(int(time())) + str(clock()) + ".log"
         with open(log_loc, 'w') as log_file:
             log_file.write("\n".join(visited_urls))
             # guarantee flush to disk ( TODO: while testing only. remove it )
@@ -128,6 +129,6 @@ class Crawler:
             Crawler.log_msg("images till now:: " + str(len(image_list)) + "/" + str(image_limit))
             Crawler.log_msg("links till now:: " + str(len(queued_links)) + "/" + str(link_limit))
 
-        log_loc = self.log_urls(visited_links)
+        log_loc = self.log_urls(visited_links, url_type="link")
         print("crawl session finished. Urls logged at: ", log_loc)
         return image_list

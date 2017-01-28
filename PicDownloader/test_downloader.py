@@ -57,6 +57,15 @@ class DownloadTest(unittest.TestCase):
             img_data = img_file.read()
         self.assertEqual(img_data, "response_content")
 
+    @patch('requests.get', side_effect=mocked_requests_get)
+    def test_download_batch(self, mock_get):
+        images = self.downloader.download_batch(["http://pic1", "http://pic2", "http://pic3"], parallelism=3)
+        self.junk_files.extend(images)
+        for img_loc in images:
+            with open(img_loc, 'r') as img_file:
+                img_data = img_file.read()
+            self.assertEqual(img_data, "response_content")
+
     @classmethod
     def tearDownClass(cls):
         for junk_file in cls.junk_files:
