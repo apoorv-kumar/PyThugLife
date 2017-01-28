@@ -1,33 +1,9 @@
 import unittest
 from downloader import Downloader
-from crawler import Crawler
 import os
 import sys
 from unittest.mock import patch
 from io import BytesIO
-
-
-class SampleCrawler(Crawler):
-    @staticmethod
-    def get_image_lambda():
-        return lambda page_url, img_url: "__isvalidpic__" in img_url
-
-    @staticmethod
-    def get_link_lambda():
-        return lambda link: "__isvalidlink__" in link
-
-    @staticmethod
-    def get_page_text(page_url):
-        return '''
-        <html>
-        <a   href="http://__isvalidlink__123">
-            <img src="http://someinvalid_link.jpg">
-        </a>
-        <a href="http://_someinvalid_link"> mytext </a>
-        <img src="http://__isvalidpic__111.png">
-        <img src="http://__isvalidpic__333.png">
-        </html>
-        '''
 
 
 class DownloadTest(unittest.TestCase):
@@ -39,8 +15,7 @@ class DownloadTest(unittest.TestCase):
             base_dir = '/tmp/'
         else:
             base_dir = 'C:/Users/apoor/AppData/Local/Temp/'
-        sample_crawler = SampleCrawler(base_dir)
-        cls.downloader = Downloader(sample_crawler)
+        cls.downloader = Downloader(base_dir)
 
     def mocked_requests_get(*args, **kwargs):
         class MockedResponse:
