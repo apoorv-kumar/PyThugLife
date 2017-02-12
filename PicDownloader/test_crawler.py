@@ -66,7 +66,7 @@ class CrawlTest(unittest.TestCase):
 
     def test_get_page_links(self):
         url_list = SampleCrawler.get_page_links("http://website/someurl")
-        expected_urls = ["http://website/__isvalidlink__123", "http://_someinvalid_link"]
+        expected_urls = ["http://website/__isvalidlink__123", "http://_someinvalid_link", "http://url/__some_pic_link.jpg"]
         self.assertSetEqual(set(url_list), set(expected_urls))
 
     def test_get_page_pics(self):
