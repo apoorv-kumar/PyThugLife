@@ -5,7 +5,8 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from time import time, clock
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
+from functools import reduce
 
 # TODO: handle kill signals. Or log results periodically.
 # TODO: do we need inheritance when we can simply
@@ -28,6 +29,15 @@ class Crawler:
     @abstractmethod
     def get_link_lambda(self):
         pass
+
+    # used to detect image links
+    # can be overridden if necessary
+    @staticmethod
+    def is_valid_img_link(link):
+        img_extensions = [".jpg", ".png", ".jpeg", ".bmp"]
+        link_path = urlparse(link).path
+        is_valid_vector = map(lambda ext: link_path.endswith(ext), img_extensions)
+        return reduce(lambda _init, _is_valid: _is_valid or _init, is_valid_vector, False)
 
     # always returns absolute path
     @staticmethod
@@ -72,9 +82,11 @@ class Crawler:
     def get_page_pics(cls, page_url):
         page_text = cls.get_page_text(page_url)
         soup = bs4.BeautifulSoup(page_text, "html.parser")
-        page_pics = map(lambda link: str(link.get("src")), soup.find_all('img'))
+        page_pics = list(map(lambda link: str(link.get("src")), soup.find_all('img')))
+        page_links = map(lambda link: str(link.get("href")), soup.find_all('a'))
+        page_pic_links = list(filter(cls.is_valid_img_link, page_links))
         page_pics_absolute = \
-            map(lambda link: cls.get_abs_url(link, page_url), page_pics)
+            map(lambda link: cls.get_abs_url(link, page_url), page_pics+page_pic_links)
         return list(page_pics_absolute)
 
     # returns dict of images and link queue

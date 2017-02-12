@@ -23,6 +23,7 @@ class SampleCrawler(Crawler):
         </a>
         <a href="http://_someinvalid_link"> mytext </a>
         <img src="http://website/__isvalidpic__111.png">
+        <a href="http://url/__some_pic_link.jpg">txt</a>
         <img src="__isvalidpic__333.png">
         </html>
         '''
@@ -53,6 +54,10 @@ class CrawlTest(unittest.TestCase):
         self.assertTrue(len(written_urls) == len(written_urls))
 
 
+    def test_is_valid_img_link(self):
+        self.assertTrue(SampleCrawler.is_valid_img_link("https://some_url/file.jpg"))
+        self.assertFalse(SampleCrawler.is_valid_img_link("https://some_url.com/abc.html"))
+
     def test_get_abs_url(self):
         self.assertEqual(
             SampleCrawler.get_abs_url("/some_relative_path.blah", "http://myweb.www.x/44/abc.jpg"),
@@ -67,6 +72,7 @@ class CrawlTest(unittest.TestCase):
     def test_get_page_pics(self):
         url_list = SampleCrawler.get_page_pics("http://website/someurl")
         expected_urls = ["http://someinvalid_link.jpg",
+                         "http://url/__some_pic_link.jpg",
                          "http://website/__isvalidpic__111.png",
                          "http://website/__isvalidpic__333.png"]
         self.assertSetEqual(set(url_list), set(expected_urls))
