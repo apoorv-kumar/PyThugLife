@@ -29,16 +29,21 @@ class Downloader:
         print(msg)
 
     def download_pic(self, pic_url):
-        response = requests.get(pic_url, stream=True)
-        name = self.generate_pic_name(pic_url)
-        image_loc = self.base_dir + '/' + name
-        with open(image_loc, 'wb') as out_file:
-            copyfileobj(response.raw, out_file)
-        self.log_msg("downloaded " + pic_url)
+        try:
+            response = requests.get(pic_url, stream=True)
+            name = self.generate_pic_name(pic_url)
+            image_loc = self.base_dir + '/' + name
+            with open(image_loc, 'wb') as out_file:
+                copyfileobj(response.raw, out_file)
+            self.log_msg("downloaded " + pic_url)
+        except:
+            image_loc = ""
+            self.log_msg("Failed to download image: " + pic_url)
         return image_loc
 
     def download_batch(self, pic_urls, parallelism=4):
         downloader_pool = Pool(parallelism)
         results = downloader_pool.map(self.download_pic, pic_urls)
+        results = filter(lambda loc: loc == "", results)  # remove invalid locations
         self.log_urls(results)
         return results

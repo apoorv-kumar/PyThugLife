@@ -63,7 +63,12 @@ class Crawler:
 
     @staticmethod
     def get_page_text(page_url):
-        return requests.get(page_url).text
+        try:
+            text = requests.get(page_url).text
+        except:
+            text = ""
+            Crawler.log_msg("Failed to download page: " + page_url)
+        return text
 
     # gets all links on the page and converts them
     # to absolute paths
