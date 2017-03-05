@@ -3,8 +3,8 @@ from time import time
 from shutil import copyfileobj
 from multiprocessing import Pool
 from urllib.parse import urlparse
-
-
+import sys
+import traceback
 # Downloader accepts a crawler and uses it to
 # download files.
 class Downloader:
@@ -31,19 +31,28 @@ class Downloader:
     def download_pic(self, pic_url):
         try:
             response = requests.get(pic_url, stream=True)
-            name = self.generate_pic_name(pic_url)
-            image_loc = self.base_dir + '/' + name
-            with open(image_loc, 'wb') as out_file:
-                copyfileobj(response.raw, out_file)
-            self.log_msg("downloaded " + pic_url)
+            if response.status_code == 200:
+                name = self.generate_pic_name(pic_url)
+                image_loc = self.base_dir + '/' + name
+                with open(image_loc, 'wb') as out_file:
+                    out_file.write(response.content)
+                self.log_msg("downloaded " + pic_url)
+            else:
+                print("Download failed. Response: " + str(response.status_code))
         except:
             image_loc = ""
-            self.log_msg("Failed to download image: " + pic_url)
+            self.log_msg("Failed to download image: " + pic_url + "\n" )
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            print("*** print_tb:")
+            traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+            print("*** print_exception:")
+            traceback.print_exception(exc_type, exc_value, exc_traceback,
+                                      limit=2, file=sys.stdout)
         return image_loc
 
     def download_batch(self, pic_urls, parallelism=4):
         downloader_pool = Pool(parallelism)
         results = downloader_pool.map(self.download_pic, pic_urls)
-        results = filter(lambda loc: loc == "", results)  # remove invalid locations
+        results = list(filter(lambda loc: loc == "", results))  # remove invalid locations
         self.log_urls(results)
         return results
