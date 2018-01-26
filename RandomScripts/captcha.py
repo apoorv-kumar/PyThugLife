@@ -10,6 +10,7 @@ import numpy as np
 COL = X = 0
 ROW = Y = 1
 
+# Cracking captchas (see resources)
 
 def get_adjacent_cells(cell, matrix):
     x_len = len(matrix[0])

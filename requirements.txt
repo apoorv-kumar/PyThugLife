@@ -1,1 +1,4 @@
 aiohttp
+opencv-python
+pytesseract
+matplotlib
