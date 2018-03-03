@@ -20,8 +20,10 @@ class DownloadTest(unittest.TestCase):
     def mocked_requests_get(*args, **kwargs):
         class MockedResponse:
             def __init__(self):
-                self.raw = BytesIO(b"response_content")
-
+                byt = b"response_content"
+                self.raw = BytesIO(byt)
+                self.status_code=200
+                self.content = byt
         return MockedResponse()
 
     @patch('requests.get', side_effect=mocked_requests_get)

@@ -2,3 +2,6 @@ aiohttp
 opencv-python
 pytesseract
 matplotlib
+requests
+bs4
+nose
